@@ -93,7 +93,19 @@
   .card.featured.spin .art { animation: wobble .28s ease-in-out infinite; }
   @keyframes wobble { 50% { transform: scale(1.08) rotate(-3deg); } }
 
+  /* ลิงก์ชื่อเมนู ขยายพื้นที่คลิกให้ทั้งการ์ดเปิดหน้ารายละเอียด */
+  .card-link { color: inherit; text-decoration: none; }
+  .card-link::after { content: ""; position: absolute; inset: 0; border-radius: var(--radius); }
+  .card-link:focus-visible { outline: none; }
+  .card-link:focus-visible::after { outline: 3px solid var(--leaf); outline-offset: -3px; }
+  .card:has(.card-link) { transition: box-shadow .15s, transform .15s; }
+  .card:has(.card-link):hover { box-shadow: 0 8px 22px rgba(90, 55, 20, .18); transform: translateY(-2px); }
+  .card .more { display: inline-block; margin-top: 8px; font-size: .82rem; color: var(--chili); font-weight: 500; }
+  .grid.small .card .more { display: none; }
+  .card.featured .label { pointer-events: none; }
+
   .fav {
+    z-index: 2;
     position: absolute; right: 10px; top: 10px; width: 40px; height: 40px;
     border-radius: 50%; border: 0; background: rgba(255,255,255,.92);
     font-size: 1.3rem; line-height: 1; color: #b9a58c; display: grid; place-items: center;
@@ -159,6 +171,31 @@
   }
   .warn.show { display: block; }
 
+  /* หน้ารายละเอียดเมนู */
+  .detail { max-width: 720px; margin: 22px auto 0; }
+  .back { display: inline-block; color: var(--chili); text-decoration: none; font-weight: 500; padding: 4px 2px; }
+  .back:hover { text-decoration: underline; }
+  .back:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; border-radius: 6px; }
+  .detail .card { margin-top: 10px; }
+  .detail .card .art { height: clamp(190px, 46vw, 340px); font-size: 7rem; }
+  .detail .body { padding: 20px 22px 26px; }
+  .detail h1 { margin: 0; font-size: clamp(1.6rem, 5vw, 2.1rem); color: var(--chili); }
+  .detail .en { font-size: .95rem; margin-bottom: 8px; }
+  .detail .lead { margin: 10px 0 14px; font-size: 1rem; }
+  .detail h2 { margin: 28px 0 4px; font-size: 1.25rem; }
+  .detail .serving { margin: 0 0 6px; color: var(--ink-soft); font-size: .85rem; }
+  .ing-group { margin-top: 16px; }
+  .ing-group h3 { margin: 0 0 2px; font-size: 1rem; color: var(--leaf); }
+  .ing-list { list-style: none; margin: 0; padding: 0; }
+  .ing-list li {
+    display: flex; justify-content: space-between; gap: 14px;
+    padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: .95rem;
+  }
+  .ing-list li:last-child { border-bottom: 0; }
+  .ing-list .amt { color: var(--ink-soft); text-align: right; flex-shrink: 0; max-width: 45%; }
+  .detail-missing { text-align: center; color: var(--ink-soft); padding: 40px 20px; border: 2px dashed var(--line); border-radius: var(--radius); background: var(--paper); }
+  .detail-missing .big { font-size: 2.6rem; display: block; }
+
   footer { text-align: center; color: var(--ink-soft); font-size: .8rem; margin-top: 48px; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -173,6 +210,7 @@
 </head>
 <body>
 <div class="wrap">
+  <div id="home">
   <header class="hero">
     <h1>🌶️ วันนี้กินอะไรดี</h1>
     <p>แนะนำอาหารไทย 10 เมนู สุ่มเมนูวันนี้ และเก็บเมนูโปรดของคุณ</p>
@@ -201,6 +239,9 @@
     <button type="button" class="reset" id="resetBtn" hidden>ล้างตัวกรองทั้งหมด</button>
   </div>
   <section class="grid" id="catalog"></section>
+  </div>
+
+  <main class="detail" id="detail" hidden></main>
 
   <footer>ข้อมูลรายการโปรดเก็บในเบราว์เซอร์ของคุณเท่านั้น</footer>
 </div>
@@ -231,8 +272,65 @@
     { id: "khao-niao-mamuang", th: "ข้าวเหนียวมะม่วง", en: "Mango Sticky Rice", emoji: "🥭", tint: "#ffefb3",
       desc: "ข้าวเหนียวมูนกะทิหอมมัน กินกับมะม่วงสุกหวานฉ่ำ ราดกะทิเค็มนิด ๆ", cat: "ของหวาน", spice: 0, region: "กลาง" }
   ];
+  // ส่วนประกอบของแต่ละเมนู (ปริมาณโดยประมาณสำหรับ 2 ที่) รูปแบบ [ชื่อ, ปริมาณ]
+  var INGREDIENTS = {
+    "tom-yum-goong": [
+      { g: "วัตถุดิบหลัก", items: [["กุ้งแม่น้ำ", "4 ตัว"], ["เห็ดฟาง", "100 กรัม"], ["น้ำสต๊อกหรือน้ำเปล่า", "3 ถ้วย"]] },
+      { g: "สมุนไพร", items: [["ตะไคร้ทุบ หั่นท่อน", "2 ต้น"], ["ข่าหั่นแว่น", "5–6 แว่น"], ["ใบมะกรูดฉีก", "4–5 ใบ"], ["พริกขี้หนูสวนทุบ", "5–10 เม็ด"]] },
+      { g: "เครื่องปรุง", items: [["น้ำพริกเผา", "1–2 ช้อนโต๊ะ"], ["น้ำปลา", "2 ช้อนโต๊ะ"], ["น้ำมะนาว", "2–3 ช้อนโต๊ะ"], ["นมข้นจืด (ใส่เพื่อให้น้ำข้น)", "2 ช้อนโต๊ะ"]] },
+      { g: "โรยหน้า", items: [["ผักชีและต้นหอมซอย", "ตามชอบ"]] }
+    ],
+    "kaeng-khiao-wan-gai": [
+      { g: "วัตถุดิบหลัก", items: [["เนื้อไก่หั่นชิ้นพอดีคำ", "300 กรัม"], ["มะเขือเปราะผ่าสี่", "5–6 ลูก"], ["มะเขือพวง", "2 ช้อนโต๊ะ"], ["พริกชี้ฟ้าหั่นแฉลบ", "2 เม็ด"]] },
+      { g: "น้ำแกง", items: [["พริกแกงเขียวหวาน", "2 ช้อนโต๊ะ"], ["กะทิ (แยกหัวกะทิไว้ผัดพริกแกง ½ ถ้วย)", "2 ถ้วย"], ["น้ำเปล่า", "½ ถ้วย"]] },
+      { g: "ปรุงรสและเครื่องหอม", items: [["น้ำปลา", "1 ช้อนโต๊ะ"], ["น้ำตาลปี๊บ", "1 ช้อนโต๊ะ"], ["ใบมะกรูดฉีก", "3 ใบ"], ["ใบโหระพา", "1 กำมือ"]] },
+      { g: "กินคู่กับ", items: [["ข้าวสวยร้อน ๆ", "2 จาน"]] }
+    ],
+    "kaeng-massaman": [
+      { g: "วัตถุดิบหลัก", items: [["เนื้อวัวหรือเนื้อไก่หั่นชิ้น", "300 กรัม"], ["มันฝรั่งหั่นชิ้น", "1 หัวกลาง"], ["หอมหัวใหญ่ผ่าสี่", "1 หัวเล็ก"], ["ถั่วลิสงคั่ว", "3 ช้อนโต๊ะ"]] },
+      { g: "น้ำแกงและเครื่องเทศ", items: [["พริกแกงมัสมั่น", "2 ช้อนโต๊ะ"], ["กะทิ", "2 ถ้วย"], ["น้ำเปล่า", "1 ถ้วย"], ["อบเชย", "1 แท่ง"], ["กระวาน", "2 เม็ด"], ["ใบกระวาน", "2 ใบ"]] },
+      { g: "ปรุงรส", items: [["น้ำมะขามเปียก", "2 ช้อนโต๊ะ"], ["น้ำตาลปี๊บ", "1 ช้อนโต๊ะ"], ["น้ำปลา", "1 ช้อนโต๊ะ"]] }
+    ],
+    "pad-thai": [
+      { g: "วัตถุดิบหลัก", items: [["เส้นจันท์แช่น้ำให้นุ่ม", "150 กรัม"], ["กุ้งสด", "6 ตัว"], ["เต้าหู้แข็งหั่นเต๋าเล็ก", "50 กรัม"], ["ไข่ไก่", "2 ฟอง"], ["หัวไชโป๊วสับ", "1 ช้อนโต๊ะ"], ["กุ้งแห้ง", "1 ช้อนโต๊ะ"], ["หอมแดงซอย", "2 หัว"], ["น้ำมันพืช", "3 ช้อนโต๊ะ"]] },
+      { g: "ซอสผัดไทย", items: [["น้ำมะขามเปียก", "3 ช้อนโต๊ะ"], ["น้ำตาลปี๊บ", "2 ช้อนโต๊ะ"], ["น้ำปลา", "2 ช้อนโต๊ะ"]] },
+      { g: "เครื่องเคียง", items: [["ถั่วงอก", "1 กำมือ"], ["กุยช่ายหั่นท่อน", "1 กำมือ"], ["ถั่วลิสงคั่วป่น", "2 ช้อนโต๊ะ"], ["มะนาวหั่นชิ้น", "2 ชิ้น"], ["พริกป่น", "ตามชอบ"]] }
+    ],
+    "pad-kra-pao": [
+      { g: "วัตถุดิบหลัก", items: [["หมูสับ", "200 กรัม"], ["ใบกะเพรา", "1 ถ้วย"], ["พริกขี้หนู", "5–8 เม็ด"], ["กระเทียม (โขลกรวมกับพริก)", "4–5 กลีบ"], ["ถั่วฝักยาวหั่นท่อน (ไม่ใส่ก็ได้)", "3 ฝัก"], ["น้ำมันพืช", "3 ช้อนโต๊ะ"]] },
+      { g: "ซอสปรุงรส", items: [["น้ำปลา", "1 ช้อนโต๊ะ"], ["ซอสหอยนางรม", "1 ช้อนโต๊ะ"], ["ซีอิ๊วดำหวาน", "1 ช้อนชา"], ["ซีอิ๊วขาว", "1 ช้อนชา"], ["น้ำตาลทราย", "1 ช้อนชา"], ["น้ำเปล่า", "2 ช้อนโต๊ะ"]] },
+      { g: "เสิร์ฟ", items: [["ไข่ไก่ (ทอดไข่ดาว)", "2 ฟอง"], ["ข้าวสวย", "2 จาน"]] }
+    ],
+    "som-tam-thai": [
+      { g: "วัตถุดิบหลัก", items: [["มะละกอดิบขูดเส้น", "2 ถ้วย"], ["มะเขือเทศผ่าสี่", "3–4 ลูก"], ["ถั่วฝักยาวหั่นท่อน", "3 ฝัก"], ["แครอทขูดเส้น (ไม่ใส่ก็ได้)", "¼ ถ้วย"]] },
+      { g: "เครื่องโขลก", items: [["กระเทียม", "2 กลีบ"], ["พริกขี้หนู", "3–5 เม็ด"], ["กุ้งแห้ง", "1 ช้อนโต๊ะ"], ["ถั่วลิสงคั่ว", "2 ช้อนโต๊ะ"]] },
+      { g: "น้ำปรุงรส", items: [["น้ำมะนาว", "2 ช้อนโต๊ะ"], ["น้ำปลา", "1½ ช้อนโต๊ะ"], ["น้ำตาลปี๊บ", "1 ช้อนโต๊ะ"]] },
+      { g: "กินคู่กับ", items: [["ข้าวเหนียว ไก่ย่าง และผักสด", "ตามชอบ"]] }
+    ],
+    "larb-moo": [
+      { g: "วัตถุดิบหลัก", items: [["หมูสับ", "250 กรัม"], ["หอมแดงซอย", "3 หัว"], ["ต้นหอมซอย", "2 ต้น"], ["ผักชีซอย", "1 ต้น"], ["ใบสะระแหน่", "1 กำมือ"]] },
+      { g: "เครื่องปรุง", items: [["ข้าวคั่วป่น", "2 ช้อนโต๊ะ"], ["พริกป่น", "1–2 ช้อนโต๊ะ"], ["น้ำปลา", "2 ช้อนโต๊ะ"], ["น้ำมะนาว", "3 ช้อนโต๊ะ"], ["น้ำตาลทราย", "½ ช้อนชา"], ["น้ำเปล่าหรือน้ำสต๊อก (ลวกหมู)", "3 ช้อนโต๊ะ"]] },
+      { g: "เครื่องเคียง", items: [["ข้าวเหนียว", "2 ห่อ"], ["กะหล่ำปลี ถั่วฝักยาว และผักสดตามชอบ", "1 จาน"]] }
+    ],
+    "khao-soi": [
+      { g: "น้ำแกง", items: [["พริกแกงข้าวซอย", "3 ช้อนโต๊ะ"], ["กะทิ (แยกหัวกะทิไว้ผัดพริกแกง ½ ถ้วย)", "2 ถ้วย"], ["น้ำสต๊อก", "1½ ถ้วย"], ["ผงกะหรี่", "1 ช้อนโต๊ะ"], ["ซีอิ๊วขาว", "1 ช้อนโต๊ะ"], ["น้ำปลา", "1 ช้อนโต๊ะ"], ["น้ำตาลปี๊บ", "1 ช้อนโต๊ะ"]] },
+      { g: "วัตถุดิบหลัก", items: [["น่องไก่", "2 ชิ้น"], ["บะหมี่ไข่สดลวกสุก", "200 กรัม"], ["บะหมี่ไข่ทอดกรอบ (โรยหน้า)", "1 กำมือ"]] },
+      { g: "เครื่องเคียง", items: [["ผักกาดดองสับ", "2 ช้อนโต๊ะ"], ["หอมแดงซอย", "2 หัว"], ["มะนาวหั่นชิ้น", "2 ชิ้น"], ["พริกป่นผัดน้ำมัน", "ตามชอบ"], ["ผักชีและต้นหอมซอย", "ตามชอบ"]] }
+    ],
+    "gai-tod-hat-yai": [
+      { g: "วัตถุดิบหลัก", items: [["ไก่ (สะโพกหรือน่องติดกระดูก)", "500 กรัม"], ["น้ำมันสำหรับทอด", "ตามต้องการ"]] },
+      { g: "เครื่องหมัก", items: [["กระเทียมโขลก", "4 กลีบ"], ["รากผักชีโขลก", "2 ราก"], ["ตะไคร้ซอยละเอียด", "2 ต้น"], ["ข่าโขลก", "1 ช้อนโต๊ะ"], ["พริกไทยเม็ดป่น", "1 ช้อนชา"], ["ผงขมิ้น", "1 ช้อนชา"], ["น้ำปลา", "2 ช้อนโต๊ะ"], ["ซีอิ๊วขาว", "1 ช้อนโต๊ะ"], ["น้ำตาลทราย", "1 ช้อนชา"]] },
+      { g: "เคลือบก่อนทอด", items: [["แป้งข้าวเจ้า", "4 ช้อนโต๊ะ"]] },
+      { g: "โรยหน้าและน้ำจิ้ม", items: [["หอมแดงเจียว", "3 ช้อนโต๊ะ"], ["น้ำจิ้มไก่รสหวาน", "1 ถ้วยเล็ก"]] }
+    ],
+    "khao-niao-mamuang": [
+      { g: "ข้าวเหนียวมูน", items: [["ข้าวเหนียวขาว (แช่น้ำ 4 ชั่วโมง)", "1 ถ้วย"], ["กะทิ", "¾ ถ้วย"], ["น้ำตาลทราย", "4 ช้อนโต๊ะ"], ["เกลือ", "¼ ช้อนชา"], ["ใบเตย (ไม่ใส่ก็ได้)", "2 ใบ"]] },
+      { g: "กะทิราดหน้า", items: [["หัวกะทิ", "½ ถ้วย"], ["แป้งข้าวเจ้า", "1 ช้อนชา"], ["น้ำตาลทราย", "1 ช้อนชา"], ["เกลือ", "¼ ช้อนชา"]] },
+      { g: "ผลไม้และโรยหน้า", items: [["มะม่วงน้ำดอกไม้สุก", "2 ผล"], ["ถั่วเขียวกะเทาะเปลือกทอด (ไม่ใส่ก็ได้)", "1 ช้อนโต๊ะ"]] }
+    ]
+  };
   var BY_ID = {};
-  CATALOG.forEach(function (d) { BY_ID[d.id] = d; });
+  CATALOG.forEach(function (d) { d.ing = INGREDIENTS[d.id] || []; BY_ID[d.id] = d; });
 
   var STORAGE_KEY = "thai-food-favorites";
   var CATEGORIES = ["ทั้งหมด", "ต้ม", "ผัด", "แกง", "ยำ", "ทอด", "ของหวาน"];
@@ -257,8 +355,12 @@
     draw: $("drawBtn"), today: $("today"), favs: $("favs"), favCount: $("favCount"),
     chips: $("chips"), catalog: $("catalog"), warn: $("warn"),
     q: $("q"), qClear: $("qClear"), regionChips: $("regionChips"), spiceChips: $("spiceChips"),
-    resultCount: $("resultCount"), reset: $("resetBtn")
+    resultCount: $("resultCount"), reset: $("resetBtn"),
+    home: $("home"), detail: $("detail")
   };
+  var detailId = null;      // เมนูที่เปิดหน้ารายละเอียดอยู่ (null = หน้าแรก)
+  var homeScroll = 0;       // ตำแหน่งเลื่อนของหน้าแรก ไว้กลับมาที่เดิม
+  var BASE_TITLE = document.title;
 
   /* ---------- localStorage ---------- */
   function loadFavorites() {
@@ -325,10 +427,10 @@
       '<div class="art' + (d.img ? " has-image" : "") + '" style="--tint:' + d.tint + '"' +
       (d.img ? "" : ' aria-hidden="true"') + '>' +
       (d.img ? '<img src="' + d.img + '" alt="' + d.th + '" loading="lazy">' : d.emoji) + "</div>" +
-      '<div class="body"><h3>' + hl(d.th, terms) + '</h3><div class="en">' + hl(d.en, terms) + "</div>" +
+      '<div class="body"><h3><a class="card-link" href="#/menu/' + d.id + '">' + hl(d.th, terms) + '</a></h3><div class="en">' + hl(d.en, terms) + "</div>" +
       "<p>" + hl(d.desc, terms) + "</p>" +
       '<div class="meta"><span class="tag">' + hl(d.cat, terms) + '</span><span class="tag">' + hl("ภาค" + d.region, terms) + "</span>" +
-      spiceHtml(d.spice) + "</div></div></article>";
+      spiceHtml(d.spice) + '</div><span class="more" aria-hidden="true">ดูส่วนประกอบ →</span></div></article>';
   }
 
   function renderToday() {
@@ -401,6 +503,51 @@
 
   function renderHearts() {
     renderToday(); renderFavs(); renderCatalog();
+    if (detailId) renderDetail();
+  }
+
+  /* ---------- หน้ารายละเอียดเมนู ---------- */
+  function renderDetail() {
+    var d = BY_ID[detailId];
+    if (!d) {
+      els.detail.innerHTML = '<a class="back" href="#/">← กลับหน้าเมนู</a>' +
+        '<div class="detail-missing"><span class="big">🔎</span>ไม่พบเมนูที่ต้องการ</div>';
+      return;
+    }
+    var groups = d.ing.map(function (g) {
+      return '<div class="ing-group"><h3>' + g.g + '</h3><ul class="ing-list">' +
+        g.items.map(function (it) {
+          return '<li><span>' + it[0] + '</span><span class="amt">' + it[1] + "</span></li>";
+        }).join("") + "</ul></div>";
+    }).join("");
+    els.detail.innerHTML = '<a class="back" href="#/">← กลับหน้าเมนู</a>' +
+      '<article class="card">' + heartBtn(d) +
+      '<div class="art' + (d.img ? " has-image" : "") + '" style="--tint:' + d.tint + '"' + (d.img ? "" : ' aria-hidden="true"') + ">" +
+      (d.img ? '<img src="' + d.img + '" alt="' + d.th + '">' : d.emoji) + "</div>" +
+      '<div class="body"><h1>' + d.th + '</h1><div class="en">' + d.en + "</div>" +
+      '<div class="meta"><span class="tag">' + d.cat + '</span><span class="tag">ภาค' + d.region + "</span>" + spiceHtml(d.spice) + "</div>" +
+      '<p class="lead">' + d.desc + "</p>" +
+      "<h2>🧺 ส่วนประกอบ</h2>" +
+      '<p class="serving">ปริมาณโดยประมาณสำหรับ 2 ที่ ปรับตามรสนิยมได้</p>' + groups +
+      "</div></article>";
+  }
+
+  function route() {
+    var m = /^#\/menu\/([\w-]+)$/.exec(window.location.hash);
+    if (m) {
+      if (detailId === null) homeScroll = window.scrollY;
+      detailId = m[1];
+      renderDetail();
+      els.home.hidden = true; els.detail.hidden = false;
+      document.title = (BY_ID[detailId] ? BY_ID[detailId].th + " – " : "") + BASE_TITLE;
+      window.scrollTo(0, 0);
+    } else {
+      var wasDetail = detailId !== null;
+      detailId = null;
+      els.detail.hidden = true; els.home.hidden = false;
+      document.title = BASE_TITLE;
+      if (wasDetail) window.scrollTo(0, homeScroll);
+    }
   }
 
   /* ---------- actions ---------- */
@@ -409,7 +556,8 @@
     var i = favorites.indexOf(id);
     if (i === -1) favorites.unshift(id); else favorites.splice(i, 1);
     saveFavorites();
-    if (drawing) { renderFavs(); renderCatalog(); } else { renderHearts(); }
+    if (drawing) { renderFavs(); renderCatalog(); if (detailId) renderDetail(); } else { renderHearts(); }
+    if (detailId) { var b = els.detail.querySelector("[data-fav]"); if (b) b.focus(); }
   }
 
   function draw() {
@@ -467,6 +615,8 @@
   els.warn.classList.toggle("show", !storageOk);
   query = els.q.value; // เบราว์เซอร์อาจคืนค่าในช่องค้นหาเมื่อรีโหลด
   renderToday(); renderFavs(); renderChips(); renderCatalog();
+  window.addEventListener("hashchange", route);
+  route();
 })();
 </script>
 </body>
