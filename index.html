@@ -243,9 +243,9 @@
   els.reset.addEventListener("click", resetFilters);
 
   /* ---------- init ---------- */
-  // ลิงก์เก่าแบบ #/menu/<id> ส่งต่อไปหน้ารายละเอียด
+  // ลิงก์เก่าแบบ #/menu/<id> ส่งต่อไปหน้ารายละเอียด (from=legacy ให้ปุ่มกลับไม่ใช้ history.back())
   var legacy = /^#\/menu\/([\w-]+)$/.exec(window.location.hash);
-  if (legacy) { window.location.replace(F.menuUrl(legacy[1])); return; }
+  if (legacy) { window.location.replace(F.menuUrl(legacy[1]) + "&from=legacy"); return; }
 
   favorites = loadFavorites();
   els.warn.classList.toggle("show", !F.storageOk());

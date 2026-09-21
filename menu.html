@@ -27,7 +27,10 @@
   var BY_ID = F.BY_ID;
   var els = { detail: document.getElementById("detail"), warn: document.getElementById("warn") };
   var BASE_TITLE = "แนะนำอาหารไทย";
-  var id = new URLSearchParams(window.location.search).get("id");
+  var params = new URLSearchParams(window.location.search);
+  var id = params.get("id");
+  // มาจากลิงก์เก่าที่ถูก redirect: รายการก่อนหน้าใน history ไม่ใช่หน้าแรกของเว็บนี้
+  var viaLegacy = params.get("from") === "legacy";
   var favorites = F.loadFavorites();
 
   function isFav(id) { return favorites.indexOf(id) !== -1; }
@@ -77,7 +80,7 @@
   document.addEventListener("click", function (e) {
     if (e.target.closest("[data-fav]")) { toggleFav(); return; }
     // ถ้ามาจากหน้าแรกของเว็บนี้ ให้ย้อนกลับ เพื่อคงตำแหน่งเลื่อนและตัวกรองเดิมไว้
-    if (e.target.closest("#back") && window.history.length > 1 && document.referrer &&
+    if (e.target.closest("#back") && !viaLegacy && window.history.length > 1 && document.referrer &&
         document.referrer.indexOf(window.location.origin) === 0 && !/menu\.html/.test(document.referrer)) {
       e.preventDefault();
       window.history.back();
