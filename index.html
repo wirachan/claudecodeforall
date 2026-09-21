@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แนะนำอาหารไทย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fdf6e7;
+    --paper: #fffdf8;
+    --ink: #3a2a1e;
+    --ink-soft: #7a6858;
+    --chili: #d9481f;
+    --chili-dark: #b53814;
+    --leaf: #3f7d4e;
+    --line: #ecdfc6;
+    --shadow: 0 4px 14px rgba(90, 55, 20, .10);
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Prompt", "Noto Sans Thai", system-ui, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px 56px; }
+
+  header.hero { text-align: center; padding: 40px 0 8px; }
+  .hero h1 { margin: 0; font-size: clamp(1.9rem, 6vw, 3rem); font-weight: 700; color: var(--chili); letter-spacing: .5px; }
+  .hero p { margin: 6px 0 0; color: var(--ink-soft); }
+
+  h2 { font-size: 1.35rem; margin: 40px 0 14px; display: flex; align-items: center; gap: 10px; }
+  h2 .count {
+    font-size: .85rem; font-weight: 500; background: var(--leaf); color: #fff;
+    border-radius: 999px; padding: 1px 12px;
+  }
+
+  button { font: inherit; cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+
+  /* Draw */
+  .draw-btn {
+    display: block; margin: 22px auto 0; border: 0; border-radius: 999px;
+    background: var(--chili); color: #fff; font-weight: 600; font-size: 1.15rem;
+    padding: 14px 34px; box-shadow: 0 6px 0 var(--chili-dark);
+    transition: transform .08s, box-shadow .08s, background .15s;
+  }
+  .draw-btn:hover { background: #e4552b; }
+  .draw-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--chili-dark); }
+  .draw-btn:disabled { opacity: .75; cursor: progress; }
+
+  .today { margin: 26px auto 0; max-width: 560px; }
+  .today-empty {
+    text-align: center; color: var(--ink-soft); padding: 34px 20px;
+    border: 2px dashed var(--line); border-radius: var(--radius); background: var(--paper);
+  }
+  .today-empty .big { font-size: 2.6rem; display: block; }
+
+  /* Cards */
+  .card {
+    position: relative; background: var(--paper); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .card .art {
+    display: grid; place-items: center; font-size: 3.6rem; height: 112px;
+    background: var(--tint, #ffe9c7);
+  }
+  /* ภาพอาหารเต็มพื้นที่การ์ด */
+  .card .art.has-image { padding: 0; overflow: hidden; }
+  .card .art img { display: block; width: 100%; height: 100%; min-height: 0; object-fit: cover; }
+  .card .body { padding: 14px 16px 16px; }
+  .card h3 { margin: 0; font-size: 1.15rem; }
+  .card .en { color: var(--ink-soft); font-size: .8rem; margin-bottom: 6px; }
+  .card p { margin: 6px 0 10px; font-size: .92rem; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .78rem; }
+  .tag { background: #f3ead6; border-radius: 999px; padding: 1px 10px; }
+  .spice { color: var(--chili); letter-spacing: 1px; }
+  .spice .off { color: #dccfb8; }
+
+  .card.featured .art { height: 150px; font-size: 5rem; }
+  .card.featured h3 { font-size: 1.5rem; }
+  .card.featured .label {
+    position: absolute; left: 12px; top: 12px; background: var(--chili); color: #fff;
+    font-size: .78rem; font-weight: 600; border-radius: 999px; padding: 1px 12px;
+  }
+  .card.featured.spin .art { animation: wobble .28s ease-in-out infinite; }
+  @keyframes wobble { 50% { transform: scale(1.08) rotate(-3deg); } }
+
+  .fav {
+    position: absolute; right: 10px; top: 10px; width: 40px; height: 40px;
+    border-radius: 50%; border: 0; background: rgba(255,255,255,.92);
+    font-size: 1.3rem; line-height: 1; color: #b9a58c; display: grid; place-items: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15); transition: transform .12s;
+  }
+  .fav:hover { transform: scale(1.1); }
+  .fav[aria-pressed="true"] { color: #e0245e; }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .grid.small { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+  .grid.small .card .art { height: 76px; font-size: 2.4rem; }
+  .grid.small .card .body { padding: 10px 12px 12px; }
+  .grid.small .card h3 { font-size: 1rem; }
+  .grid.small .card p, .grid.small .card .meta { display: none; }
+  .grid.small .card .en { margin-bottom: 0; }
+  .grid.small .fav { width: 34px; height: 34px; font-size: 1.1rem; }
+
+  .empty-favs { color: var(--ink-soft); background: var(--paper); border: 2px dashed var(--line); border-radius: var(--radius); padding: 22px; text-align: center; }
+
+  /* Chips */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .chip {
+    border: 1px solid var(--line); background: var(--paper); border-radius: 999px;
+    padding: 5px 16px; color: var(--ink);
+  }
+  .chip[aria-pressed="true"] { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+
+  /* Search & filters */
+  .search { position: relative; margin-bottom: 14px; }
+  .search input {
+    width: 100%; font: inherit; color: var(--ink); background: var(--paper);
+    border: 1px solid var(--line); border-radius: 999px; padding: 11px 92px 11px 44px;
+    box-shadow: var(--shadow);
+  }
+  .search input::placeholder { color: var(--ink-soft); }
+  .search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+  .search input:focus-visible { outline: 3px solid var(--leaf); outline-offset: 2px; }
+  .search .icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+  .search .clear {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    border: 0; background: #f3ead6; color: var(--ink); border-radius: 999px; padding: 3px 14px; font-size: .85rem;
+  }
+  .search .clear[hidden] { display: none; }
+  .filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .filter-row .lbl { color: var(--ink-soft); font-size: .85rem; min-width: 52px; }
+  .filter-row .chips { margin: 0; }
+  .result-bar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+    margin: 6px 0 14px; color: var(--ink-soft); font-size: .88rem;
+  }
+  .reset { border: 0; background: none; color: var(--chili); text-decoration: underline; padding: 2px 4px; }
+  .reset[hidden] { display: none; }
+  .no-result {
+    grid-column: 1 / -1; text-align: center; color: var(--ink-soft); padding: 34px 20px;
+    border: 2px dashed var(--line); border-radius: var(--radius); background: var(--paper);
+  }
+  .no-result .big { font-size: 2.4rem; display: block; }
+  mark { background: #ffe38a; color: inherit; border-radius: 3px; padding: 0 1px; }
+
+  .warn {
+    display: none; margin: 16px 0 0; padding: 8px 14px; border-radius: 12px;
+    background: #fff1d6; border: 1px solid #f0c674; font-size: .88rem; text-align: center;
+  }
+  .warn.show { display: block; }
+
+  footer { text-align: center; color: var(--ink-soft); font-size: .8rem; margin-top: 48px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card.featured.spin .art { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+  @media (max-width: 480px) {
+    .grid { grid-template-columns: 1fr; }
+    .grid.small { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <h1>🌶️ วันนี้กินอะไรดี</h1>
+    <p>แนะนำอาหารไทย 10 เมนู สุ่มเมนูวันนี้ และเก็บเมนูโปรดของคุณ</p>
+    <button id="drawBtn" class="draw-btn" type="button">🎲 สุ่มอาหารไทยวันนี้</button>
+  </header>
+
+  <div id="warn" class="warn" role="status">บันทึกไม่ได้ในเบราว์เซอร์นี้ รายการโปรดจะหายเมื่อรีเฟรชหน้า</div>
+
+  <section class="today" id="today" aria-live="polite"></section>
+
+  <h2>❤️ รายการโปรดของฉัน <span class="count" id="favCount">0</span></h2>
+  <section id="favs"></section>
+
+  <h2>📖 เมนูอาหารไทย</h2>
+  <div class="search" role="search">
+    <span class="icon" aria-hidden="true">🔍</span>
+    <input id="q" type="search" autocomplete="off" placeholder="ค้นหาเมนู เช่น ต้มยำ, curry, กะทิ, อีสาน"
+           aria-label="ค้นหาเมนูอาหาร">
+    <button type="button" class="clear" id="qClear" hidden>ล้าง</button>
+  </div>
+  <div class="filter-row"><span class="lbl">หมวด</span><div class="chips" id="chips" role="group" aria-label="กรองตามหมวด"></div></div>
+  <div class="filter-row"><span class="lbl">ภาค</span><div class="chips" id="regionChips" role="group" aria-label="กรองตามภาค"></div></div>
+  <div class="filter-row"><span class="lbl">ความเผ็ด</span><div class="chips" id="spiceChips" role="group" aria-label="กรองตามความเผ็ด"></div></div>
+  <div class="result-bar">
+    <span id="resultCount"></span>
+    <button type="button" class="reset" id="resetBtn" hidden>ล้างตัวกรองทั้งหมด</button>
+  </div>
+  <section class="grid" id="catalog"></section>
+
+  <footer>ข้อมูลรายการโปรดเก็บในเบราว์เซอร์ของคุณเท่านั้น</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var CATALOG = [
+    { id: "tom-yum-goong", img: "images/tom-yum-goong.png", th: "ต้มยำกุ้ง", en: "Tom Yum Goong", emoji: "🍲", tint: "#ffd9c2",
+      desc: "ซุปร้อนเปรี้ยวเผ็ดหอมข่า ตะไคร้ ใบมะกรูด ใส่กุ้งสดตัวโต", cat: "ต้ม", spice: 3, region: "กลาง" },
+    { id: "kaeng-khiao-wan-gai", th: "แกงเขียวหวานไก่", en: "Green Curry with Chicken", emoji: "🥘", tint: "#d8efc9",
+      desc: "แกงกะทิสีเขียวหอมพริกแกงและโหระพา กินกับข้าวสวยร้อน ๆ", cat: "แกง", spice: 2, region: "กลาง" },
+    { id: "kaeng-massaman", th: "แกงมัสมั่น", en: "Massaman Curry", emoji: "🍛", tint: "#f6dfb8",
+      desc: "แกงกะทิรสกลมกล่อมหวานมัน ใส่มันฝรั่งและถั่วลิสง เนื้อนุ่มละลายในปาก", cat: "แกง", spice: 1, region: "ใต้" },
+    { id: "pad-thai", th: "ผัดไทย", en: "Pad Thai", emoji: "🍜", tint: "#ffe3a8",
+      desc: "เส้นจันท์ผัดซอสมะขามรสเปรี้ยวหวาน ใส่กุ้งสด เต้าหู้ ถั่วงอก และถั่วป่น", cat: "ผัด", spice: 0, region: "กลาง" },
+    { id: "pad-kra-pao", th: "ผัดกะเพราหมูสับไข่ดาว", en: "Basil Pork with Fried Egg", emoji: "🍳", tint: "#ffe0d2",
+      desc: "หมูสับผัดพริกกระเทียมกับใบกะเพราหอม ราดข้าว ไข่ดาวกรอบขอบ", cat: "ผัด", spice: 2, region: "กลาง" },
+    { id: "som-tam-thai", th: "ส้มตำไทย", en: "Green Papaya Salad", emoji: "🥗", tint: "#e3f2c6",
+      desc: "มะละกอดิบสับตำกับพริก มะนาว น้ำปลา ถั่วลิสง รสจัดจ้านสดชื่น", cat: "ยำ", spice: 3, region: "อีสาน" },
+    { id: "larb-moo", th: "ลาบหมู", en: "Spicy Minced Pork Salad", emoji: "🥩", tint: "#f4d6d0",
+      desc: "หมูสับคลุกข้าวคั่ว พริกป่น สะระแหน่ และต้นหอม หอมเผ็ดเปรี้ยวเค็ม", cat: "ยำ", spice: 3, region: "อีสาน" },
+    { id: "khao-soi", th: "ข้าวซอย", en: "Khao Soi", emoji: "🍜", tint: "#fbe3b0",
+      desc: "ก๋วยเตี๋ยวไข่ในน้ำแกงกะทิหอมเครื่องเทศ โรยเส้นกรอบ กินกับผักดองและมะนาว", cat: "แกง", spice: 1, region: "เหนือ" },
+    { id: "gai-tod-hat-yai", th: "ไก่ทอดหาดใหญ่", en: "Hat Yai Fried Chicken", emoji: "🍗", tint: "#ffe2b5",
+      desc: "ไก่ทอดหมักสมุนไพรกรอบนอกนุ่มใน โรยหอมเจียวกรอบ จิ้มน้ำจิ้มหวาน", cat: "ทอด", spice: 0, region: "ใต้" },
+    { id: "khao-niao-mamuang", th: "ข้าวเหนียวมะม่วง", en: "Mango Sticky Rice", emoji: "🥭", tint: "#ffefb3",
+      desc: "ข้าวเหนียวมูนกะทิหอมมัน กินกับมะม่วงสุกหวานฉ่ำ ราดกะทิเค็มนิด ๆ", cat: "ของหวาน", spice: 0, region: "กลาง" }
+  ];
+  var BY_ID = {};
+  CATALOG.forEach(function (d) { BY_ID[d.id] = d; });
+
+  var STORAGE_KEY = "thai-food-favorites";
+  var CATEGORIES = ["ทั้งหมด", "ต้ม", "ผัด", "แกง", "ยำ", "ทอด", "ของหวาน"];
+
+  var favorites = [];       // รหัสเมนู ล่าสุดก่อน
+  var storageOk = true;
+  var REGIONS = ["ทั้งหมด", "เหนือ", "อีสาน", "กลาง", "ใต้"];
+  var SPICES = [
+    { v: "all", label: "ทั้งหมด" }, { v: "0", label: "ไม่เผ็ด" }, { v: "1", label: "เผ็ดน้อย 🌶" },
+    { v: "2", label: "เผ็ดกลาง 🌶🌶" }, { v: "3", label: "เผ็ดมาก 🌶🌶🌶" }
+  ];
+
+  var activeCat = "ทั้งหมด";
+  var activeRegion = "ทั้งหมด";
+  var activeSpice = "all";
+  var query = "";
+  var todayId = null;
+  var drawing = false;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var els = {
+    draw: $("drawBtn"), today: $("today"), favs: $("favs"), favCount: $("favCount"),
+    chips: $("chips"), catalog: $("catalog"), warn: $("warn"),
+    q: $("q"), qClear: $("qClear"), regionChips: $("regionChips"), spiceChips: $("spiceChips"),
+    resultCount: $("resultCount"), reset: $("resetBtn")
+  };
+
+  /* ---------- localStorage ---------- */
+  function loadFavorites() {
+    var raw;
+    try {
+      raw = window.localStorage.getItem(STORAGE_KEY);
+    } catch (e) {
+      storageOk = false;
+      return [];
+    }
+    if (raw === null) return [];
+    var parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return [];
+    }
+    if (!Array.isArray(parsed)) return [];
+    var seen = {};
+    return parsed.filter(function (id) {
+      if (typeof id !== "string" || !BY_ID[id] || seen[id]) return false;
+      seen[id] = true;
+      return true;
+    });
+  }
+  function saveFavorites() {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+    } catch (e) {
+      storageOk = false;
+    }
+    els.warn.classList.toggle("show", !storageOk);
+  }
+
+  /* ---------- rendering ---------- */
+  function isFav(id) { return favorites.indexOf(id) !== -1; }
+
+  function spiceHtml(n) {
+    var s = "";
+    for (var i = 0; i < 3; i++) s += i < n ? "🌶" : '<span class="off">🌶</span>';
+    return '<span class="spice" title="ความเผ็ด ' + n + ' จาก 3">' + s + "</span>";
+  }
+
+  function heartBtn(d) {
+    var on = isFav(d.id);
+    return '<button type="button" class="fav" data-fav="' + d.id + '" aria-pressed="' + on + '"' +
+      ' aria-label="' + (on ? "เอา" : "เพิ่ม") + d.th + (on ? "ออกจากรายการโปรด" : "เป็นรายการโปรด") + '">' +
+      (on ? "♥" : "♡") + "</button>";
+  }
+
+  function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+  // ไฮไลต์คำค้นในข้อความ (ข้อความมาจาก CATALOG ที่เราเขียนเอง ไม่มี HTML พิเศษ)
+  function hl(text, terms) {
+    if (!terms || !terms.length) return text;
+    var re = new RegExp("(" + terms.map(escRe).join("|") + ")", "gi");
+    return text.replace(re, "<mark>$1</mark>");
+  }
+
+  function cardHtml(d, extraClass, label, terms) {
+    return '<article class="card ' + (extraClass || "") + '">' +
+      (label ? '<span class="label">' + label + "</span>" : "") +
+      heartBtn(d) +
+      '<div class="art' + (d.img ? " has-image" : "") + '" style="--tint:' + d.tint + '"' +
+      (d.img ? "" : ' aria-hidden="true"') + '>' +
+      (d.img ? '<img src="' + d.img + '" alt="' + d.th + '" loading="lazy">' : d.emoji) + "</div>" +
+      '<div class="body"><h3>' + hl(d.th, terms) + '</h3><div class="en">' + hl(d.en, terms) + "</div>" +
+      "<p>" + hl(d.desc, terms) + "</p>" +
+      '<div class="meta"><span class="tag">' + hl(d.cat, terms) + '</span><span class="tag">' + hl("ภาค" + d.region, terms) + "</span>" +
+      spiceHtml(d.spice) + "</div></div></article>";
+  }
+
+  function renderToday() {
+    if (!todayId) {
+      els.today.innerHTML = '<div class="today-empty"><span class="big">🍽️</span>' +
+        "ยังไม่ได้สุ่ม กดปุ่ม “สุ่มอาหารไทยวันนี้” เพื่อดูว่าวันนี้ควรกินอะไร</div>";
+      return;
+    }
+    els.today.innerHTML = cardHtml(BY_ID[todayId], "featured", "เมนูวันนี้");
+  }
+
+  function renderFavs() {
+    els.favCount.textContent = favorites.length;
+    if (!favorites.length) {
+      els.favs.innerHTML = '<div class="empty-favs">ยังไม่มีรายการโปรด กดหัวใจ ♡ บนเมนูที่ชอบเพื่อเก็บไว้ที่นี่</div>';
+      return;
+    }
+    els.favs.innerHTML = '<div class="grid small">' +
+      favorites.map(function (id) { return cardHtml(BY_ID[id]); }).join("") + "</div>";
+  }
+
+  function chipsHtml(attr, items, active) {
+    return items.map(function (it) {
+      var v = typeof it === "string" ? it : it.v, label = typeof it === "string" ? it : it.label;
+      return '<button type="button" class="chip" data-' + attr + '="' + v + '" aria-pressed="' + (v === active) + '">' + label + "</button>";
+    }).join("");
+  }
+
+  function renderChips() {
+    els.chips.innerHTML = chipsHtml("cat", CATEGORIES, activeCat);
+    els.regionChips.innerHTML = chipsHtml("region", REGIONS, activeRegion);
+    els.spiceChips.innerHTML = chipsHtml("spice", SPICES, activeSpice);
+  }
+
+  function searchTerms() {
+    return query.toLowerCase().split(/\s+/).filter(Boolean);
+  }
+
+  function matches(d, terms) {
+    if (activeCat !== "ทั้งหมด" && d.cat !== activeCat) return false;
+    if (activeRegion !== "ทั้งหมด" && d.region !== activeRegion) return false;
+    if (activeSpice !== "all" && String(d.spice) !== activeSpice) return false;
+    if (!terms.length) return true;
+    var hay = (d.th + " " + d.en + " " + d.desc + " " + d.cat + " ภาค" + d.region).toLowerCase();
+    return terms.every(function (t) { return hay.indexOf(t) !== -1; });
+  }
+
+  function isFiltered() {
+    return query.trim() !== "" || activeCat !== "ทั้งหมด" || activeRegion !== "ทั้งหมด" || activeSpice !== "all";
+  }
+
+  function renderCatalog() {
+    var terms = searchTerms();
+    var list = CATALOG.filter(function (d) { return matches(d, terms); });
+    els.catalog.innerHTML = list.length
+      ? list.map(function (d) { return cardHtml(d, "", "", terms); }).join("")
+      : '<div class="no-result"><span class="big">🔎</span>ไม่พบเมนูที่ตรงกับเงื่อนไข ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง</div>';
+    els.resultCount.textContent = isFiltered()
+      ? "พบ " + list.length + " จาก " + CATALOG.length + " เมนู"
+      : "แสดงทั้งหมด " + CATALOG.length + " เมนู";
+    els.reset.hidden = !isFiltered();
+    els.qClear.hidden = query === "";
+  }
+
+  function resetFilters() {
+    query = ""; els.q.value = "";
+    activeCat = "ทั้งหมด"; activeRegion = "ทั้งหมด"; activeSpice = "all";
+    renderChips(); renderCatalog();
+  }
+
+  function renderHearts() {
+    renderToday(); renderFavs(); renderCatalog();
+  }
+
+  /* ---------- actions ---------- */
+  function toggleFav(id) {
+    if (!BY_ID[id]) return;
+    var i = favorites.indexOf(id);
+    if (i === -1) favorites.unshift(id); else favorites.splice(i, 1);
+    saveFavorites();
+    if (drawing) { renderFavs(); renderCatalog(); } else { renderHearts(); }
+  }
+
+  function draw() {
+    if (drawing) return;
+    drawing = true;
+    els.draw.disabled = true;
+
+    var pool = CATALOG.filter(function (d) { return d.id !== todayId; });
+    var pick = pool[Math.floor(Math.random() * pool.length)];
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var frames = reduce ? 0 : 8;
+    var n = 0;
+
+    function finish() {
+      todayId = pick.id;
+      drawing = false;
+      els.draw.disabled = false;
+      els.draw.textContent = "🎲 สุ่มใหม่อีกครั้ง";
+      renderToday();
+    }
+    if (!frames) { finish(); return; }
+
+    var timer = setInterval(function () {
+      n++;
+      if (n > frames) { clearInterval(timer); finish(); return; }
+      var d = CATALOG[Math.floor(Math.random() * CATALOG.length)];
+      els.today.innerHTML = '<article class="card featured spin"><div class="art" style="--tint:' + d.tint +
+        '" aria-hidden="true">' + d.emoji + '</div><div class="body"><h3>' + d.th + "</h3>" +
+        '<div class="en">กำลังสุ่ม…</div></div></article>';
+    }, 120);
+  }
+
+  /* ---------- events ---------- */
+  els.draw.addEventListener("click", draw);
+  document.addEventListener("click", function (e) {
+    var fav = e.target.closest("[data-fav]");
+    if (fav) { toggleFav(fav.getAttribute("data-fav")); return; }
+    var chip = e.target.closest("[data-cat], [data-region], [data-spice]");
+    if (chip) {
+      if (chip.hasAttribute("data-cat")) activeCat = chip.getAttribute("data-cat");
+      else if (chip.hasAttribute("data-region")) activeRegion = chip.getAttribute("data-region");
+      else activeSpice = chip.getAttribute("data-spice");
+      renderChips(); renderCatalog();
+    }
+  });
+  els.q.addEventListener("input", function () { query = els.q.value; renderCatalog(); });
+  els.q.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && query) { query = ""; els.q.value = ""; renderCatalog(); }
+  });
+  els.qClear.addEventListener("click", function () { query = ""; els.q.value = ""; renderCatalog(); els.q.focus(); });
+  els.reset.addEventListener("click", resetFilters);
+
+  /* ---------- init ---------- */
+  favorites = loadFavorites();
+  els.warn.classList.toggle("show", !storageOk);
+  query = els.q.value; // เบราว์เซอร์อาจคืนค่าในช่องค้นหาเมื่อรีโหลด
+  renderToday(); renderFavs(); renderChips(); renderCatalog();
+})();
+</script>
+</body>
+</html>
