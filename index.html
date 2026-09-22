@@ -6,25 +6,47 @@
 <title>แนะนำอาหารไทย</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Anuphan:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="wrap">
-  <header class="hero">
-    <h1>🌶️ วันนี้กินอะไรดี</h1>
-    <p>แนะนำอาหารไทย 10 เมนู สุ่มเมนูวันนี้ และเก็บเมนูโปรดของคุณ</p>
-    <button id="drawBtn" class="draw-btn" type="button">🎲 สุ่มอาหารไทยวันนี้</button>
-  </header>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">แนะนำอาหารไทย</a>
+    <div class="nav-links">
+      <a href="#catalog-section">เมนู</a>
+      <a href="#favs-section">รายการโปรด</a>
+    </div>
+    <a class="pill-outline" href="#drawBtn">สุ่มเมนู</a>
+  </div>
+</nav>
 
-  <div id="warn" class="warn" role="status">บันทึกไม่ได้ในเบราว์เซอร์นี้ รายการโปรดจะหายเมื่อรีเฟรชหน้า</div>
+<header class="hero" id="top" style="background-image:url('images/tom-yum-goong.png')">
+  <div class="hero-overlay">
+    <p class="eyebrow">10 เมนูอาหารไทยแท้ คัดสรรมาให้คุณ</p>
+    <h1>วันนี้กินอะไรดี</h1>
+    <p class="hero-sub">แนะนำอาหารไทย 10 เมนู สุ่มเมนูวันนี้ และเก็บเมนูโปรดของคุณ</p>
+    <button id="drawBtn" class="btn-pill-fill" type="button">สุ่มอาหารไทยวันนี้</button>
+  </div>
+</header>
 
-  <section class="today" id="today" aria-live="polite"></section>
+<div id="warn" class="warn" role="status">บันทึกไม่ได้ในเบราว์เซอร์นี้ รายการโปรดจะหายเมื่อรีเฟรชหน้า</div>
 
-  <h2>❤️ รายการโปรดของฉัน <span class="count" id="favCount">0</span></h2>
-  <section id="favs"></section>
+<section class="band today-band">
+  <div class="wrap">
+    <section class="today" id="today" aria-live="polite"></section>
+  </div>
+</section>
 
-  <h2>📖 เมนูอาหารไทย</h2>
+<section class="band favs-band" id="favs-section">
+  <div class="wrap">
+    <h2>รายการโปรดของฉัน <span class="count" id="favCount">0</span></h2>
+    <section id="favs"></section>
+  </div>
+</section>
+
+<div class="wrap" id="catalog-section">
+  <h2>เมนูอาหารไทย</h2>
   <div class="search" role="search">
     <span class="icon" aria-hidden="true">🔍</span>
     <input id="q" type="search" autocomplete="off" placeholder="ค้นหาเมนู เช่น ต้มยำ, curry, กะทิ, อีสาน"
@@ -39,7 +61,6 @@
     <button type="button" class="reset" id="resetBtn" hidden>ล้างตัวกรองทั้งหมด</button>
   </div>
   <section class="grid" id="catalog"></section>
-
 
   <footer>ข้อมูลรายการโปรดเก็บในเบราว์เซอร์ของคุณเท่านั้น</footer>
 </div>
@@ -207,7 +228,7 @@
       todayId = pick.id;
       drawing = false;
       els.draw.disabled = false;
-      els.draw.textContent = "🎲 สุ่มใหม่อีกครั้ง";
+      els.draw.textContent = "สุ่มใหม่อีกครั้ง";
       renderToday();
     }
     if (!frames) { finish(); return; }
