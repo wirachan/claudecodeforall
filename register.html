@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>สมัครสมาชิก - แนะนำอาหารไทย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Anuphan:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="index.html">แนะนำอาหารไทย</a>
+  </div>
+</nav>
+
+<main class="detail">
+  <a class="back" href="index.html">← กลับหน้าแรก</a>
+  <h1>สมัครสมาชิก</h1>
+  <form id="f" class="form" novalidate>
+    <label>ชื่อ<input id="fn" required maxlength="50" autocomplete="given-name"></label>
+    <label>นามสกุล<input id="ln" required maxlength="50" autocomplete="family-name"></label>
+    <label>อีเมล<input id="email" type="email" required maxlength="254" autocomplete="email"></label>
+    <label>เบอร์โทร (ตัวเลข 9-10 หลัก)<input id="phone" type="tel" required pattern="[0-9]{9,10}" inputmode="numeric" autocomplete="tel"></label>
+    <button class="btn-pill-fill" type="submit" id="submit">สมัครสมาชิก</button>
+    <p id="msg" class="form-msg" role="status"></p>
+  </form>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function () {
+  "use strict";
+  // publishable key ออกแบบมาให้อยู่ฝั่ง client ได้ ความปลอดภัยอยู่ที่ RLS
+  var sb = supabase.createClient(
+    "https://zahvyhbtyhhlwqelthmy.supabase.co",
+    "sb_publishable_QOWWR2f4ejtBB51TTzKoDQ_NL1YNJnI"
+  );
+  var $ = function (id) { return document.getElementById(id); };
+  var msg = $("msg"), btn = $("submit");
+
+  $("f").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!$("f").reportValidity()) return;
+    btn.disabled = true;
+    msg.textContent = "กำลังสมัคร…";
+    sb.from("members").insert({
+      first_name: $("fn").value.trim(),
+      last_name: $("ln").value.trim(),
+      email: $("email").value.trim().toLowerCase(),
+      phone: $("phone").value.trim()
+    }).then(function (r) {
+      if (r.error) {
+        msg.textContent = r.error.code === "23505" ? "อีเมลนี้สมัครไว้แล้ว" : "สมัครไม่สำเร็จ: " + r.error.message;
+        btn.disabled = false;
+      } else {
+        msg.textContent = "สมัครสำเร็จ! ขอบคุณที่เป็นสมาชิก";
+        $("f").reset();
+        btn.disabled = false;
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
