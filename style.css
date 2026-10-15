@@ -289,6 +289,10 @@ mark { background: var(--color-lime-glow); color: var(--color-forest-shadow); bo
 
 footer { text-align: center; color: var(--color-slate-gray); font-size: 14px; margin-top: var(--spacing-40); }
 
+.credits { margin-top: var(--spacing-16); font-size: 13px; }
+.credits ul { list-style: none; margin: var(--spacing-8) 0 0; padding: 0; display: grid; gap: var(--spacing-4); }
+.credits a { color: var(--color-deep-forest); }
+
 @media (prefers-reduced-motion: reduce) {
   .card.featured.spin .art { animation: none; }
   html { scroll-behavior: auto; }
